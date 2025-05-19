@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Reservations - NaghamTours</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/admin-dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">NaghamTours</h4>
+                        <p class="text-white-50">Admin Panel</p>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/admin/dashboard}">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/admin/tours}">
+                                <i class="fas fa-map-marked-alt"></i> Tours
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" th:href="@{/admin/reservations}">
+                                <i class="fas fa-calendar-check"></i> Reservations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/admin/users}">
+                                <i class="fas fa-users"></i> Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/admin/settings}">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <form th:action="@{/logout}" method="post" class="d-inline">
+                                <button type="submit" class="nav-link border-0 bg-transparent text-danger">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Manage Reservations</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <a th:href="@{/admin/reservations/new}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Reservation
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Alert Messages -->
+                <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> <span th:text="${message}">Operation completed successfully!</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> <span th:text="${error}">Error message</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form class="row g-3">
+                            <div class="col-md-4">
+                                <div class="search-bar">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" class="form-control" placeholder="Search reservations...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select">
+                                    <option value="">All Status</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="CONFIRMED">Confirmed</option>
+                                    <option value="CANCELLED">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" class="form-control" placeholder="Filter by date">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter"></i> Filter
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Reservations Table -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tour Name</th>
+                                        <th>Client</th>
+                                        <th>Participants</th>
+                                        <th>Booking Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="booking : ${bookings}">
+                                        <td th:text="${booking.id}"></td>
+                                        <td th:text="${booking.packageEntity.name}"></td>
+                                        <td th:text="${booking.client.clientName}"></td>
+                                        <td th:text="${booking.participants}"></td>
+                                        <td th:text="${#temporals.format(booking.bookingDate, 'dd/MM/yyyy HH:mm')}"></td>
+                                        <td>
+                                            <span th:class="${'badge ' + (booking.status == 'PENDING' ? 'bg-warning' : 
+                                                             (booking.status == 'CONFIRMED' ? 'bg-success' : 
+                                                             (booking.status == 'CANCELLED' ? 'bg-danger' : 'bg-secondary')))}"
+                                                  th:text="${booking.status}">Status</span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <!-- Debug: Show status value -->
+                                                <span class="text-muted small" th:text="${booking.status}"></span>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-success"
+                                                        th:if="${booking.status.toString().equalsIgnoreCase('PENDING')}"
+                                                        th:onclick="'updateStatus(' + ${booking.id} + ', \'CONFIRMED\')'"
+                                                        title="Confirm Booking">
+                                                    <i class="fas fa-check"></i> Confirm
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        th:if="${booking.status.toString().equalsIgnoreCase('PENDING')}"
+                                                        th:onclick="'updateStatus(' + ${booking.id} + ', \'CANCELLED\')'"
+                                                        title="Cancel Booking">
+                                                    <i class="fas fa-times"></i> Cancel
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        th:if="${!booking.status.toString().equalsIgnoreCase('PENDING') && !booking.status.toString().equalsIgnoreCase('CANCELLED')}"
+                                                        th:onclick="'updateStatus(' + ${booking.id} + ', \'CANCELLED\')'"
+                                                        title="Cancel Booking">
+                                                    <i class="fas fa-times"></i> Cancel
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(bookings)}">
+                                        <td colspan="7" class="text-center">No reservations found</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        const token = /*[[${_csrf != null ? _csrf.token : ''}]]*/ '';
+        const header = /*[[${_csrf != null ? _csrf.headerName : ''}]]*/ '';
+
+        function updateStatus(bookingId, status) {
+            const action = status === 'CONFIRMED' ? 'confirm' : 'cancel';
+            if (confirm('Are you sure you want to ' + action + ' this booking?')) {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                // Only add CSRF header if token and header name are available
+                if (token && header) {
+                    headers[header] = token;
+                }
+
+                fetch('/admin/reservations/' + bookingId + '/' + action.toLowerCase(), {
+                    method: 'POST',
+                    headers: headers
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        return response.text().then(text => {
+                            throw new Error(text || 'Failed to ' + action + ' booking');
+                        });
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                });
+            }
+        }
+    </script>
+</body>
+</html> 

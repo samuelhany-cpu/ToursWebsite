@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tour Packages</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Tour Packages</h1>
+        
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col" th:each="pkg : ${packages}">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${pkg.name}">Package Name</h5>
+                        <p class="card-text" th:text="${pkg.description}">Description</p>
+                        <ul class="list-unstyled">
+                            <li><strong>Destination:</strong> <span th:text="${pkg.destination}"></span></li>
+                            <li><strong>Duration:</strong> <span th:text="${pkg.duration + ' days'}"></span></li>
+                            <li><strong>Price:</strong> $<span th:text="${pkg.price}"></span></li>
+                            <li><strong>Location:</strong> <span th:text="${pkg.location}"></span></li>
+                            <li><strong>Max Participants:</strong> <span th:text="${pkg.maxParticipants}"></span></li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">
+                            <strong>Start Date:</strong> <span th:text="${#temporals.format(pkg.startDate, 'yyyy-MM-dd')}"></span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
