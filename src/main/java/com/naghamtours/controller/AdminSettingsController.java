@@ -43,6 +43,8 @@ public class AdminSettingsController {
                           @RequestParam String email,
                           @RequestParam String password,
                           @RequestParam String confirmPassword,
+                          @RequestParam String phone,
+                          @RequestParam String address,
                           RedirectAttributes redirectAttributes) {
         try {
             // Validate username format
@@ -76,6 +78,8 @@ public class AdminSettingsController {
             admin.setEmail(email);
             admin.setPassword(passwordEncoder.encode(password));
             admin.setEnabled(true);
+            admin.setPhone(phone);
+            admin.setAddress(address);
 
             adminService.save(admin);
             redirectAttributes.addFlashAttribute("success", true);

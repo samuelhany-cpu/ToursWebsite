@@ -27,6 +27,12 @@ public class Admin {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "address")
+    private String address;
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -74,5 +80,21 @@ public class Admin {
 
     public void setLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 }

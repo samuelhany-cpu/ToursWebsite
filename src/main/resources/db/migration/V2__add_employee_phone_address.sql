@@ -1,0 +1,3 @@
+ALTER TABLE employee
+ADD COLUMN phone VARCHAR(32),
+ADD COLUMN address VARCHAR(255); 
