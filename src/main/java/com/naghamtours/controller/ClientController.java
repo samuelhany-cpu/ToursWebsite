@@ -4,6 +4,7 @@ import com.naghamtours.entity.Booking;
 import com.naghamtours.entity.Client;
 import com.naghamtours.entity.Package;
 import com.naghamtours.service.BookingService;
+import com.naghamtours.service.InvoiceService;
 import com.naghamtours.service.PackageService;
 import com.naghamtours.service.SecurityService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -34,6 +36,9 @@ public class ClientController {
 
     @Autowired
     private SecurityService securityService;
+
+    @Autowired
+    private InvoiceService invoiceService;
 
     @GetMapping("/tours")
     public String viewActiveTours(
@@ -127,9 +132,18 @@ public class ClientController {
             booking.setParticipants(participants);
             booking.setStatus(Booking.BookingStatus.PENDING);
 
-            bookingService.createBooking(booking);
-            redirectAttributes.addFlashAttribute("successMessage", "Tour booked successfully! Your booking is pending approval.");
-            return "redirect:/client/bookings";
+            // Calculate total amount
+            Double packagePrice = tour.getPrice();
+            if (packagePrice == null || participants == null) {
+                throw new IllegalArgumentException("Package price and number of participants must not be null");
+            }
+            booking.setTotalAmount(java.math.BigDecimal.valueOf(packagePrice * participants));
+
+            // Save the booking first
+            booking = bookingService.createBooking(booking);
+            
+            // Redirect to payment page
+            return "redirect:/client/payment/" + booking.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to book tour: " + e.getMessage());
             return "redirect:/client/tours/" + id;
@@ -184,5 +198,70 @@ public class ClientController {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to cancel booking: " + e.getMessage());
         }
         return "redirect:/client/bookings";
+    }
+
+    @GetMapping("/payment/{bookingId}")
+    public String showPaymentPage(@PathVariable Long bookingId, Model model) {
+        try {
+            Booking booking = bookingService.getBookingById(bookingId)
+                    .orElseThrow(() -> new RuntimeException("Booking not found"));
+            
+            // Verify that the booking belongs to the current client
+            Client currentClient = securityService.getCurrentClient();
+            if (!booking.getClient().getId().equals(currentClient.getId())) {
+                throw new RuntimeException("You are not authorized to view this booking");
+            }
+            
+            // Verify that the booking is in PENDING status
+            if (booking.getStatus() != Booking.BookingStatus.PENDING) {
+                throw new RuntimeException("This booking cannot be paid for. Current status: " + booking.getStatus());
+            }
+            
+            model.addAttribute("booking", booking);
+            return "client/payment";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "redirect:/client/bookings";
+        }
+    }
+
+    @PostMapping("/payment/process")
+    public String processPayment(@RequestParam Long bookingId, 
+                               @RequestParam String cardNumber,
+                               @RequestParam String expiryDate,
+                               @RequestParam String cvv,
+                               @RequestParam String cardHolderName,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            // Get the booking
+            Optional<Booking> bookingOpt = bookingService.getBookingById(bookingId);
+            if (bookingOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Booking not found");
+                return "redirect:/client/bookings";
+            }
+            Booking booking = bookingOpt.get();
+
+            // Verify the booking belongs to the current client
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth.getName();
+            if (!booking.getClient().getClientName().equals(username)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access to booking");
+                return "redirect:/client/bookings";
+            }
+
+            // Process payment (in a real application, this would integrate with a payment gateway)
+            // For now, we'll just simulate a successful payment
+            bookingService.updateBookingStatus(bookingId, Booking.BookingStatus.CONFIRMED);
+
+            // Generate and send invoice
+            byte[] invoicePdf = invoiceService.generateInvoice(booking);
+            invoiceService.sendInvoiceEmail(booking, invoicePdf);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Payment successful! An invoice has been sent to your email.");
+            return "redirect:/client/bookings";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Payment failed: " + e.getMessage());
+            return "redirect:/client/payment/" + bookingId;
+        }
     }
 } 

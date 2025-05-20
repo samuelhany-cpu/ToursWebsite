@@ -30,13 +30,20 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public Booking createBooking(Booking booking) {
+        // Calculate total amount based on package price and number of participants
+        Double packagePrice = booking.getPackageEntity().getPrice();
+        Integer participants = booking.getParticipants();
+        if (packagePrice == null || participants == null) {
+            throw new IllegalArgumentException("Package price and number of participants must not be null");
+        }
+        booking.setTotalAmount(java.math.BigDecimal.valueOf(packagePrice * participants));
         booking.setStatus(Booking.BookingStatus.PENDING);
         return bookingRepository.save(booking);
     }
 
     @Override
     public Optional<Booking> getBookingById(Long id) {
-        return bookingRepository.findById(id);
+        return bookingRepository.findByIdWithPackageAndClient(id);
     }
 
     @Override

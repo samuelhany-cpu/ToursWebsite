@@ -41,81 +41,47 @@ public class TourServiceImpl implements TourService {
 
     @Override
     public List<Package> getAllPackages() {
-        return packageRepository.findAll();
+        return packageRepository.findByDeletedFalse();
     }
 
     @Override
     public Optional<Package> getPackageById(Long id) {
-        return packageRepository.findById(id);
+        return packageRepository.findByIdAndDeletedFalse(id);
     }
 
     @Override
     public Package savePackage(Package package_) {
+        if (package_.getDeleted() == null) {
+            package_.setDeleted(false);
+        }
         return packageRepository.save(package_);
     }
 
     @Override
     @Transactional
     public void deletePackage(Long id) {
-        try {
-            Package package_ = packageRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Package not found with id: " + id));
+        softDeletePackage(id);
+    }
 
-            // First, get all reserves for this package
-            List<Reserve> reserves = reserveRepository.findByPackageEntity(package_);
+    @Override
+    public void softDeletePackage(Long id) {
+        Package package_ = packageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Package not found with id: " + id));
+        
+        // Mark the package as deleted
+        package_.setDeleted(true);
+        packageRepository.save(package_);
+    }
 
-            // For each reserve, handle its relationships
-            for (Reserve reserve : reserves) {
-                // First, delete any client transaction payments
-                ClientTransactionPayment payment = reserve.getPayment();
-                if (payment != null) {
-                    // Delete the payment first
-                    clientTransactionPaymentRepository.delete(payment);
-                    // Clear the reference
-                    reserve.setPayment(null);
-                    entityManager.persist(reserve);
-                }
-            }
+    @Override
+    public List<Package> getAllActivePackages() {
+        return packageRepository.findByDeletedFalseAndEnabledTrue();
+    }
 
-            // Now delete all reserves
-            for (Reserve reserve : reserves) {
-                entityManager.remove(reserve);
-            }
-
-            // Delete package options
-            List<PackageOption> options = package_.getPackageOptions();
-            if (options != null) {
-                for (PackageOption option : options) {
-                    entityManager.remove(option);
-                }
-            }
-
-            // Delete cancels
-            List<Cancel> cancels = package_.getCancels();
-            if (cancels != null) {
-                for (Cancel cancel : cancels) {
-                    entityManager.remove(cancel);
-                }
-            }
-
-            // Delete bookings
-            List<Booking> bookings = package_.getBookings();
-            if (bookings != null) {
-                for (Booking booking : bookings) {
-                    entityManager.remove(booking);
-                }
-            }
-
-            // Finally delete the package
-            entityManager.remove(package_);
-
-            // Flush and clear to ensure all changes are applied
-            entityManager.flush();
-            entityManager.clear();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error deleting package: " + e.getMessage());
-        }
+    @Override
+    public Optional<Package> getActivePackageById(Long id) {
+        return packageRepository.findByIdAndDeletedFalse(id)
+                .filter(p -> p.getEnabled());
     }
 
     @Override

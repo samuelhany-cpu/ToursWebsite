@@ -61,15 +61,19 @@
                         <form th:action="@{/client/tours/{id}/book(id=${tour.id})}" method="post">
                             <div class="alert alert-info">
                                 <p>By booking this tour, you agree to our terms and conditions.</p>
-                                <p>The booking will be pending until approved by our staff.</p>
+                                <p>The booking will be pending until payment is completed.</p>
                             </div>
                             <div class="mb-3">
                                 <label for="participants" class="form-label">Number of Participants</label>
                                 <input type="number" class="form-control" id="participants" name="participants" 
-                                       min="1" th:max="${tour.maxParticipants}" required>
+                                       min="1" th:max="${tour.maxParticipants}" required
+                                       onchange="updateTotalAmount()">
                                 <div class="form-text">Maximum participants: <span th:text="${tour.maxParticipants}"></span></div>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-lg">Book Now</button>
+                            <div class="mb-3">
+                                <h5>Total Amount: <span id="totalAmount">$0.00</span></h5>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg">Proceed to Payment</button>
                         </form>
                     </div>
                 </div>
@@ -78,5 +82,16 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateTotalAmount() {
+            const participants = document.getElementById('participants').value;
+            const pricePerPerson = [[${tour.price}]];
+            const total = participants * pricePerPerson;
+            document.getElementById('totalAmount').textContent = '$' + total.toFixed(2);
+        }
+        
+        // Initialize total amount on page load
+        document.addEventListener('DOMContentLoaded', updateTotalAmount);
+    </script>
 </body>
 </html> 

@@ -114,7 +114,7 @@
                                     </tr>
                                     <tr th:each="booking : ${recentBookings}">
                                         <td th:text="${booking.client.clientName}">Client Name</td>
-                                        <td th:text="${booking.packageEntity.name}">Tour Name</td>
+                                        <td th:text="${booking.packageEntity != null ? booking.packageEntity.name : 'Package Deleted'}">Tour Name</td>
                                         <td th:text="${#temporals.format(booking.bookingDate, 'yyyy-MM-dd HH:mm')}">Date</td>
                                         <td>
                                             <span th:class="${'badge ' + (booking.status == T(com.naghamtours.entity.Booking.BookingStatus).CONFIRMED ? 'bg-success' : 

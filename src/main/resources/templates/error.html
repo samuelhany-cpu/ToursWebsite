@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Error</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">Error</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${status}">Error Status</h5>
+                        <p class="card-text" th:text="${error}">Error Message</p>
+                        <p class="card-text" th:text="${message}">Detailed Message</p>
+                        <a href="/admin/dashboard" class="btn btn-primary">Back to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

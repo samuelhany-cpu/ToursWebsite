@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>My Invoices</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>My Invoices</h2>
+        
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="invoice : ${invoices}">
+                        <td th:text="${invoice.id}"></td>
+                        <td th:text="${#temporals.format(invoice.date, 'yyyy-MM-dd HH:mm')}"></td>
+                        <td>$<span th:text="${invoice.amount}"></span></td>
+                        <td th:text="${invoice.status}"></td>
+                        <td>
+                            <a th:href="@{/invoices/{id}(id=${invoice.id})}" class="btn btn-sm btn-info">View</a>
+                            <a th:href="@{/invoices/{id}/download(id=${invoice.id})}" class="btn btn-sm btn-primary">Download</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mt-3">
+            <a th:href="@{/client/dashboard}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+    
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

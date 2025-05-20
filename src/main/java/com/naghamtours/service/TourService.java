@@ -18,5 +18,9 @@ public interface TourService {
     List<Package> findByMinParticipants(int minParticipants);
     boolean isPackageAvailable(Package package_, int participants);
     List<Package> findPackagesBetweenDates(LocalDateTime startDate, LocalDateTime endDate);
-
+    
+    // Add soft delete methods
+    void softDeletePackage(Long id);
+    List<Package> getAllActivePackages();
+    Optional<Package> getActivePackageById(Long id);
 } 

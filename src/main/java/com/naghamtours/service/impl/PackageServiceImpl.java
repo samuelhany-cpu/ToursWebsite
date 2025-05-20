@@ -69,58 +69,11 @@ public class PackageServiceImpl implements PackageService {
         try {
             Package package_ = packageRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Package not found with id: " + id));
-
-            // First, get all reserves for this package
-            List<Reserve> reserves = reserveRepository.findByPackageEntity(package_);
-
-            // For each reserve, handle its relationships
-            for (Reserve reserve : reserves) {
-                // First, delete any client transaction payments
-                ClientTransactionPayment payment = reserve.getPayment();
-                if (payment != null) {
-                    // Delete the payment first
-                    clientTransactionPaymentRepository.delete(payment);
-                    // Clear the reference
-                    reserve.setPayment(null);
-                    entityManager.persist(reserve);
-                }
-            }
-
-            // Now delete all reserves
-            for (Reserve reserve : reserves) {
-                entityManager.remove(reserve);
-            }
-
-            // Delete package options
-            List<PackageOption> options = package_.getPackageOptions();
-            if (options != null) {
-                for (PackageOption option : options) {
-                    entityManager.remove(option);
-                }
-            }
-
-            // Delete cancels
-            List<Cancel> cancels = package_.getCancels();
-            if (cancels != null) {
-                for (Cancel cancel : cancels) {
-                    entityManager.remove(cancel);
-                }
-            }
-
-            // Delete bookings
-            List<Booking> bookings = package_.getBookings();
-            if (bookings != null) {
-                for (Booking booking : bookings) {
-                    entityManager.remove(booking);
-                }
-            }
-
-            // Finally delete the package
-            entityManager.remove(package_);
-
-            // Flush and clear to ensure all changes are applied
-            entityManager.flush();
-            entityManager.clear();
+            
+            // Mark the package as deleted
+            package_.setDeleted(true);
+            packageRepository.save(package_);
+            
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error deleting package: " + e.getMessage());

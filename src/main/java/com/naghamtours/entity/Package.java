@@ -58,6 +58,9 @@ public class Package {
     @Column(name = "max_participants")
     private Integer maxParticipants;
 
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
     @OneToMany(mappedBy = "packageEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PackageOption> packageOptions = new ArrayList<>();
 
@@ -213,5 +216,13 @@ public class Package {
 
     public void setBookings(List<Booking> bookings) {
         this.bookings = bookings;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
     }
 }

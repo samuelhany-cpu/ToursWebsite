@@ -37,6 +37,9 @@ public class Booking {
     @Column(name = "STATUS", nullable = false)
     private BookingStatus status;
 
+    @Column(name = "TOTAL_AMOUNT")
+    private java.math.BigDecimal totalAmount;
+
     public enum BookingStatus {
         PENDING,
         CONFIRMED,
@@ -91,5 +94,13 @@ public class Booking {
 
     public void setStatus(BookingStatus status) {
         this.status = status;
+    }
+
+    public java.math.BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(java.math.BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
     }
 } 
