@@ -40,11 +40,33 @@ public class Booking {
     @Column(name = "TOTAL_AMOUNT")
     private java.math.BigDecimal totalAmount;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "PAYMENT_METHOD")
+    private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "PAYMENT_STATUS")
+    private PaymentStatus paymentStatus;
+
+    @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
+    private Invoice invoice;
+
     public enum BookingStatus {
         PENDING,
         CONFIRMED,
         CANCELLED,
         COMPLETED
+    }
+
+    public enum PaymentMethod {
+        CASH,
+        VISA
+    }
+
+    public enum PaymentStatus {
+        PENDING,
+        PAID,
+        FAILED
     }
 
     // Getters and Setters
@@ -102,5 +124,29 @@ public class Booking {
 
     public void setTotalAmount(java.math.BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public PaymentMethod getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public Invoice getInvoice() {
+        return invoice;
+    }
+
+    public void setInvoice(Invoice invoice) {
+        this.invoice = invoice;
     }
 } 

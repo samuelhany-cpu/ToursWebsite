@@ -13,6 +13,7 @@ public interface BookingService {
     List<Booking> getBookingsByTourId(Long tourId);
     List<Booking> getUpcomingBookings();
     Booking updateBookingStatus(Long id, Booking.BookingStatus status);
+    Booking updatePaymentStatus(Long id, Booking.PaymentStatus status);
     void cancelBooking(Long id);
     boolean isBookingPossible(Long tourId, int participants);
     List<Booking> getBookingsByDateRange(LocalDateTime startDate, LocalDateTime endDate);

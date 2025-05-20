@@ -10,4 +10,5 @@ public interface InvoiceService {
     Invoice getInvoiceById(Long id);
     byte[] generatePdfInvoice(Long id);
     List<Invoice> getInvoicesByClientId(Long clientId);
+    Invoice saveInvoice(Invoice invoice);
 } 

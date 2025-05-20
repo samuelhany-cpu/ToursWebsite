@@ -13,12 +13,15 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.security.web.csrf.CsrfToken;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
-@RequestMapping("/admin/reservations")
+@RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminReservationController {
 
@@ -31,14 +34,14 @@ public class AdminReservationController {
     @Autowired
     private PackageService packageService;
 
-    @GetMapping
+    @GetMapping("/reservations")
     public String listReservations(Model model) {
         List<Booking> bookings = bookingService.getAllBookings();
         model.addAttribute("bookings", bookings);
         return "admin/reservations";
     }
 
-    @GetMapping("/new")
+    @GetMapping("/reservations/new")
     public String newReservationForm(Model model) {
         List<Client> clients = userService.getAllClients();
         List<Package> tours = packageService.getAllPackages();
@@ -47,7 +50,7 @@ public class AdminReservationController {
         return "admin/reservations/new";
     }
 
-    @PostMapping("/new")
+    @PostMapping("/reservations/new")
     public String createReservation(@RequestParam Long clientId,
                                   @RequestParam Long tourId,
                                   @RequestParam int participants,
@@ -70,6 +73,8 @@ public class AdminReservationController {
             booking.setParticipants(participants);
             booking.setBookingDate(LocalDateTime.parse(bookingDate + "T00:00:00"));
             booking.setStatus(Booking.BookingStatus.PENDING);
+            booking.setPaymentMethod(Booking.PaymentMethod.CASH);
+            booking.setPaymentStatus(Booking.PaymentStatus.PENDING);
 
             bookingService.createBooking(booking);
             redirectAttributes.addFlashAttribute("success", true);
@@ -81,21 +86,29 @@ public class AdminReservationController {
         }
     }
 
-    @PutMapping("/{id}/status")
-    public String updateStatus(@PathVariable Long id,
-                             @RequestParam Booking.BookingStatus status,
-                             RedirectAttributes redirectAttributes) {
+    @PostMapping("/reservations/{id}/confirm-payment")
+    @ResponseBody
+    public ResponseEntity<String> confirmPayment(@PathVariable Long id) {
         try {
-            bookingService.updateBookingStatus(id, status);
-            redirectAttributes.addFlashAttribute("success", true);
-            redirectAttributes.addFlashAttribute("message", "Reservation status updated successfully");
+            Booking booking = bookingService.getBookingById(id)
+                    .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+            if (booking.getPaymentMethod() != Booking.PaymentMethod.CASH) {
+                throw new RuntimeException("Only cash payments can be confirmed manually");
+            }
+
+            if (booking.getPaymentStatus() == Booking.PaymentStatus.PAID) {
+                throw new RuntimeException("Payment is already confirmed");
+            }
+
+            bookingService.updatePaymentStatus(id, Booking.PaymentStatus.PAID);
+            return ResponseEntity.ok("Payment confirmed successfully");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to update status: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return "redirect:/admin/reservations";
     }
 
-    @PostMapping("/{id}/confirm")
+    @PostMapping("/reservations/{id}/confirm")
     @ResponseBody
     public ResponseEntity<String> confirmBooking(@PathVariable Long id) {
         try {
@@ -113,7 +126,7 @@ public class AdminReservationController {
         }
     }
 
-    @PostMapping("/{id}/cancel")
+    @PostMapping("/reservations/{id}/cancel")
     @ResponseBody
     public ResponseEntity<String> cancelBooking(@PathVariable Long id) {
         try {

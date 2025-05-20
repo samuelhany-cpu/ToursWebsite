@@ -18,10 +18,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByPackageEntity(Package packageEntity);
     List<Booking> findByBookingDateAfter(LocalDateTime date);
     List<Booking> findByBookingDateBetween(LocalDateTime startDate, LocalDateTime endDate);
-    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity LEFT JOIN FETCH b.client WHERE b.id = :id AND (b.packageEntity IS NULL OR b.packageEntity.deleted = false)")
+    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity LEFT JOIN FETCH b.client LEFT JOIN FETCH b.invoice WHERE b.id = :id AND (b.packageEntity IS NULL OR b.packageEntity.deleted = false)")
     Optional<Booking> findByIdWithPackageAndClient(@Param("id") Long id);
-    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity LEFT JOIN FETCH b.client WHERE b.packageEntity IS NULL OR b.packageEntity.deleted = false")
+    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity LEFT JOIN FETCH b.client LEFT JOIN FETCH b.invoice WHERE b.packageEntity IS NULL OR b.packageEntity.deleted = false")
     List<Booking> findAllWithPackageAndClient();
-    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity WHERE b.client.id = :userId AND (b.packageEntity IS NULL OR b.packageEntity.deleted = false)")
+    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity LEFT JOIN FETCH b.invoice WHERE b.client.id = :userId AND (b.packageEntity IS NULL OR b.packageEntity.deleted = false)")
     List<Booking> findByUserIdWithPackage(@Param("userId") Long userId);
 } 

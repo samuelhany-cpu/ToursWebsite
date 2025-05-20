@@ -109,7 +109,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr th:if="${recentBookings.empty}">
+                                    <tr th:if="${#lists.isEmpty(recentBookings)}">
                                         <td colspan="4" class="text-center">No recent activities</td>
                                     </tr>
                                     <tr th:each="booking : ${recentBookings}">
@@ -117,9 +117,9 @@
                                         <td th:text="${booking.packageEntity != null ? booking.packageEntity.name : 'Package Deleted'}">Tour Name</td>
                                         <td th:text="${#temporals.format(booking.bookingDate, 'yyyy-MM-dd HH:mm')}">Date</td>
                                         <td>
-                                            <span th:class="${'badge ' + (booking.status == T(com.naghamtours.entity.Booking.BookingStatus).CONFIRMED ? 'bg-success' : 
-                                                                      booking.status == T(com.naghamtours.entity.Booking.BookingStatus).PENDING ? 'bg-warning' : 
-                                                                      booking.status == T(com.naghamtours.entity.Booking.BookingStatus).CANCELLED ? 'bg-danger' : 'bg-secondary')}"
+                                            <span th:class="${'badge ' + (booking.status.name() == 'CONFIRMED' ? 'bg-success' : 
+                                                                      booking.status.name() == 'PENDING' ? 'bg-warning' : 
+                                                                      booking.status.name() == 'CANCELLED' ? 'bg-danger' : 'bg-secondary')}"
                                                   th:text="${booking.status}">Status</span>
                                         </td>
                                     </tr>

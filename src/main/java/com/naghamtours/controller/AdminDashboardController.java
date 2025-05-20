@@ -44,6 +44,10 @@ public class AdminDashboardController {
             List<Package> activeTours = tourService.getAllActivePackages();
             model.addAttribute("totalTours", activeTours.size());
 
+            // Get total clients
+            List<Client> clients = userService.getAllClients();
+            model.addAttribute("totalClients", clients.size());
+
             // Get all bookings and filter out those with missing or deleted packages
             List<Booking> allBookings = bookingService.getAllBookings();
             List<Booking> validBookings = allBookings.stream()
@@ -93,8 +97,8 @@ public class AdminDashboardController {
             return "admin/dashboard";
         } catch (Exception e) {
             logger.error("Error loading dashboard: ", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
-                "Error loading dashboard. Please try again later.");
+            model.addAttribute("error", "Error loading dashboard. Please try again later.");
+            return "error";
         }
     }
 }

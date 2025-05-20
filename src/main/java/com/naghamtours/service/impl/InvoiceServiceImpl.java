@@ -28,6 +28,23 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public byte[] generateInvoice(Booking booking) {
         try {
+            // Save the invoice if it hasn't been saved yet
+            if (booking.getInvoice() != null && booking.getInvoice().getId() == null) {
+                booking.getInvoice().setBooking(booking);
+                booking.setInvoice(invoiceRepository.save(booking.getInvoice()));
+            }
+
+            // Ensure all required entities are loaded
+            if (booking.getPackageEntity() != null) {
+                booking.getPackageEntity().getName(); // Force load package
+            }
+            if (booking.getClient() != null) {
+                booking.getClient().getFirstName(); // Force load client
+                booking.getClient().getLastName();
+                booking.getClient().getClientEmail();
+                booking.getClient().getPhone();
+            }
+
             Document document = new Document();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -175,5 +192,10 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public List<Invoice> getInvoicesByClientId(Long clientId) {
         return invoiceRepository.findByClientId(clientId);
+    }
+
+    @Override
+    public Invoice saveInvoice(Invoice invoice) {
+        return invoiceRepository.save(invoice);
     }
 } 

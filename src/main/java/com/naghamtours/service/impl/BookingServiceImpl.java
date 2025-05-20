@@ -79,6 +79,15 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
+    public Booking updatePaymentStatus(Long id, Booking.PaymentStatus status) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        booking.setPaymentStatus(status);
+        return bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
     public void cancelBooking(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));

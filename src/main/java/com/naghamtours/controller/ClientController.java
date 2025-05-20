@@ -3,10 +3,14 @@ package com.naghamtours.controller;
 import com.naghamtours.entity.Booking;
 import com.naghamtours.entity.Client;
 import com.naghamtours.entity.Package;
+import com.naghamtours.entity.Invoice;
 import com.naghamtours.service.BookingService;
 import com.naghamtours.service.InvoiceService;
 import com.naghamtours.service.PackageService;
 import com.naghamtours.service.SecurityService;
+import com.naghamtours.service.EmailService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,6 +31,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/client")
 @PreAuthorize("hasRole('CLIENT')")
 public class ClientController {
+    private static final Logger logger = LoggerFactory.getLogger(ClientController.class);
 
     @Autowired
     private PackageService packageService;
@@ -39,6 +44,9 @@ public class ClientController {
 
     @Autowired
     private InvoiceService invoiceService;
+
+    @Autowired
+    private EmailService emailService;
 
     @GetMapping("/tours")
     public String viewActiveTours(
@@ -225,43 +233,91 @@ public class ClientController {
         }
     }
 
-    @PostMapping("/payment/process")
-    public String processPayment(@RequestParam Long bookingId, 
-                               @RequestParam String cardNumber,
-                               @RequestParam String expiryDate,
-                               @RequestParam String cvv,
-                               @RequestParam String cardHolderName,
-                               RedirectAttributes redirectAttributes) {
+    @PostMapping("/process-payment")
+    public String processPayment(@RequestParam Long bookingId, @RequestParam String paymentMethod, Model model) {
         try {
-            // Get the booking
-            Optional<Booking> bookingOpt = bookingService.getBookingById(bookingId);
-            if (bookingOpt.isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Booking not found");
-                return "redirect:/client/bookings";
-            }
-            Booking booking = bookingOpt.get();
+            Booking booking = bookingService.getBookingById(bookingId).orElseThrow(() -> 
+                new RuntimeException("Booking not found"));
 
-            // Verify the booking belongs to the current client
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String username = auth.getName();
-            if (!booking.getClient().getClientName().equals(username)) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access to booking");
-                return "redirect:/client/bookings";
+            // Set payment method
+            booking.setPaymentMethod(Booking.PaymentMethod.valueOf(paymentMethod));
+            
+            if (paymentMethod.equals("VISA")) {
+                // For visa payments, redirect to payment gateway
+                return "redirect:/client/payment/visa/" + bookingId;
+            } else {
+                // For cash payments, set status to pending and redirect to confirmation page
+                booking.setPaymentStatus(Booking.PaymentStatus.PENDING);
+                bookingService.updateBookingStatus(bookingId, booking.getStatus());
+                
+                model.addAttribute("booking", booking);
+                model.addAttribute("message", "Your booking has been received. Please visit our office to complete the payment.");
+                return "client/payment-confirmation";
+            }
+        } catch (Exception e) {
+            logger.error("Error processing payment: ", e);
+            model.addAttribute("error", "Error processing payment. Please try again.");
+            return "error";
+        }
+    }
+
+    @GetMapping("/payment/visa/{bookingId}")
+    public String visaPaymentPage(@PathVariable Long bookingId, Model model, HttpServletRequest request) {
+        try {
+            Booking booking = bookingService.getBookingById(bookingId).orElseThrow(() -> 
+                new RuntimeException("Booking not found"));
+
+            // Add CSRF token
+            CsrfToken token = (CsrfToken) request.getAttribute("_csrf");
+            if (token != null) {
+                model.addAttribute("_csrf", token);
             }
 
-            // Process payment (in a real application, this would integrate with a payment gateway)
-            // For now, we'll just simulate a successful payment
+            model.addAttribute("booking", booking);
+            return "client/visa-payment";
+        } catch (Exception e) {
+            logger.error("Error loading visa payment page: ", e);
+            model.addAttribute("error", "Error loading payment page. Please try again.");
+            return "error";
+        }
+    }
+
+    @PostMapping("/payment/visa/process")
+    public String processVisaPayment(@RequestParam Long bookingId, RedirectAttributes redirectAttributes) {
+        try {
+            // Get the booking with all required entities loaded
+            Booking booking = bookingService.getBookingById(bookingId)
+                    .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+            // Create and save invoice
+            Invoice invoice = new Invoice();
+            invoice.setBooking(booking);
+            invoice.setClient(booking.getClient());
+            invoice.setAmount(booking.getTotalAmount());
+            invoice.setDate(LocalDateTime.now());
+            invoice.setStatus("PAID");
+            invoice.setDescription("Payment for booking #" + booking.getId());
+            invoice = invoiceService.saveInvoice(invoice);
+
+            // Update booking with invoice
+            booking.setInvoice(invoice);
+            booking.setPaymentStatus(Booking.PaymentStatus.PAID);
+            booking.setStatus(Booking.BookingStatus.CONFIRMED);
             bookingService.updateBookingStatus(bookingId, Booking.BookingStatus.CONFIRMED);
 
-            // Generate and send invoice
+            // Generate PDF invoice
             byte[] invoicePdf = invoiceService.generateInvoice(booking);
-            invoiceService.sendInvoiceEmail(booking, invoicePdf);
+            if (invoicePdf != null) {
+                // Send confirmation email with invoice
+                invoiceService.sendInvoiceEmail(booking, invoicePdf);
+            }
 
-            redirectAttributes.addFlashAttribute("successMessage", "Payment successful! An invoice has been sent to your email.");
+            redirectAttributes.addFlashAttribute("success", "Payment processed successfully! A confirmation email has been sent.");
             return "redirect:/client/bookings";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Payment failed: " + e.getMessage());
-            return "redirect:/client/payment/" + bookingId;
+            logger.error("Error processing payment: " + e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("error", "Error processing payment: " + e.getMessage());
+            return "redirect:/client/payment/visa/" + bookingId;
         }
     }
 } 
