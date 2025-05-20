@@ -8,6 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.config.http.SessionCreationPolicy;
 
 /**
  * Security configuration for the application.
@@ -49,6 +50,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/api/**")
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
             );
 
         return http.build();

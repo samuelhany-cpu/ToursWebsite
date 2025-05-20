@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,8 +48,37 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Booking> getAllBookings() {
-        return bookingRepository.findAllWithPackageAndClient();
+        try {
+            System.out.println("Starting to fetch all bookings...");
+            // First try the basic query
+            List<Booking> bookings = bookingRepository.findAllBasic();
+            System.out.println("Basic query returned " + (bookings != null ? bookings.size() : 0) + " bookings");
+            
+            if (bookings == null || bookings.isEmpty()) {
+                System.out.println("No bookings found with basic query");
+                return new ArrayList<>();
+            }
+
+            // Now try to load the related entities
+            try {
+                System.out.println("Attempting to load related entities...");
+                bookings = bookingRepository.findAllWithPackageAndClientWithoutInvoice();
+                System.out.println("Successfully loaded " + bookings.size() + " bookings with related entities");
+            } catch (Exception e) {
+                System.err.println("Error loading related entities: " + e.getMessage());
+                // If loading related entities fails, return the basic bookings
+                System.out.println("Returning basic booking data");
+                return bookings;
+            }
+
+            return bookings;
+        } catch (Exception e) {
+            System.err.println("Error in getAllBookings: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to fetch bookings: " + e.getMessage(), e);
+        }
     }
 
     @Override

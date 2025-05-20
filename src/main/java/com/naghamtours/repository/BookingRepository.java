@@ -20,8 +20,22 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByBookingDateBetween(LocalDateTime startDate, LocalDateTime endDate);
     @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity LEFT JOIN FETCH b.client LEFT JOIN FETCH b.invoice WHERE b.id = :id AND (b.packageEntity IS NULL OR b.packageEntity.deleted = false)")
     Optional<Booking> findByIdWithPackageAndClient(@Param("id") Long id);
-    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity LEFT JOIN FETCH b.client LEFT JOIN FETCH b.invoice WHERE b.packageEntity IS NULL OR b.packageEntity.deleted = false")
+    @Query("SELECT DISTINCT b FROM Booking b " +
+           "LEFT JOIN FETCH b.packageEntity p " +
+           "LEFT JOIN FETCH b.client c " +
+           "LEFT JOIN FETCH b.invoice i " +
+           "WHERE p IS NULL OR p.deleted = false " +
+           "ORDER BY b.bookingDate DESC")
     List<Booking> findAllWithPackageAndClient();
-    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity LEFT JOIN FETCH b.invoice WHERE b.client.id = :userId AND (b.packageEntity IS NULL OR b.packageEntity.deleted = false)")
+    @Query("SELECT b FROM Booking b " +
+           "LEFT JOIN FETCH b.packageEntity p " +
+           "LEFT JOIN FETCH b.client c " +
+           "WHERE p IS NULL OR p.deleted = false " +
+           "ORDER BY b.bookingDate DESC")
+    List<Booking> findAllWithPackageAndClientWithoutInvoice();
+    @Query("SELECT b FROM Booking b " +
+           "ORDER BY b.bookingDate DESC")
+    List<Booking> findAllBasic();
+    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.packageEntity LEFT JOIN FETCH b.client LEFT JOIN FETCH b.invoice WHERE b.client.id = :userId AND (b.packageEntity IS NULL OR b.packageEntity.deleted = false)")
     List<Booking> findByUserIdWithPackage(@Param("userId") Long userId);
 } 

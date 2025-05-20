@@ -132,40 +132,47 @@
                                     </tr>
                                     <tr th:each="booking : ${bookings}">
                                         <td th:text="${booking.id}">1</td>
-                                        <td th:text="${booking.client.firstName + ' ' + booking.client.lastName}">John Doe</td>
-                                        <td th:text="${booking.packageEntity.name}">Tour Name</td>
-                                        <td th:text="${#temporals.format(booking.bookingDate, 'yyyy-MM-dd HH:mm')}">2024-03-19</td>
+                                        <td th:text="${booking.client != null ? booking.client.firstName + ' ' + booking.client.lastName : 'N/A'}">John Doe</td>
+                                        <td th:text="${booking.packageEntity != null ? booking.packageEntity.name : 'N/A'}">Tour Name</td>
+                                        <td th:text="${booking.bookingDate != null ? #temporals.format(booking.bookingDate, 'yyyy-MM-dd HH:mm') : 'N/A'}">2024-03-19</td>
                                         <td th:text="${booking.participants}">2</td>
-                                        <td th:text="${#numbers.formatCurrency(booking.totalAmount)}">$100.00</td>
+                                        <td th:text="${booking.totalAmount != null ? #numbers.formatCurrency(booking.totalAmount) : 'N/A'}">$100.00</td>
                                         <td>
-                                            <span th:class="${'badge ' + (booking.paymentMethod.name() == 'VISA' ? 'bg-primary' : 'bg-success')}"
-                                                  th:text="${booking.paymentMethod}">CASH</span>
+                                            <span th:if="${booking.paymentMethod != null}" 
+                                                  th:class="${'badge ' + (booking.paymentMethod.name() == 'VISA' ? 'bg-primary' : 'bg-success')}"
+                                                  th:text="${booking.paymentMethod.name()}">CASH</span>
+                                            <span th:unless="${booking.paymentMethod != null}" class="badge bg-secondary">N/A</span>
                                         </td>
                                         <td>
-                                            <span th:class="${'badge ' + (booking.paymentStatus.name() == 'PAID' ? 'bg-success' : 
+                                            <span th:if="${booking.paymentStatus != null}"
+                                                  th:class="${'badge ' + (booking.paymentStatus.name() == 'PAID' ? 'bg-success' : 
                                                                       booking.paymentStatus.name() == 'PENDING' ? 'bg-warning' : 'bg-danger')}"
                                                   th:text="${booking.paymentStatus}">PENDING</span>
+                                            <span th:unless="${booking.paymentStatus != null}" class="badge bg-secondary">N/A</span>
                                         </td>
                                         <td>
-                                            <span th:class="${'badge ' + (booking.status.name() == 'CONFIRMED' ? 'bg-success' : 
+                                            <span th:if="${booking.status != null}"
+                                                  th:class="${'badge ' + (booking.status.name() == 'CONFIRMED' ? 'bg-success' : 
                                                                       booking.status.name() == 'PENDING' ? 'bg-warning' : 
                                                                       booking.status.name() == 'CANCELLED' ? 'bg-danger' : 'bg-secondary')}"
                                                   th:text="${booking.status}">PENDING</span>
+                                            <span th:unless="${booking.status != null}" class="badge bg-secondary">N/A</span>
                                         </td>
                                         <td>
                                             <div class="btn-group">
                                                 <button type="button" class="btn btn-sm btn-primary" 
-                                                        th:if="${booking.paymentMethod.name() == 'CASH' && booking.paymentStatus.name() == 'PENDING'}"
+                                                        th:if="${booking.paymentMethod != null && booking.paymentStatus != null && 
+                                                               booking.paymentMethod.name() == 'CASH' && booking.paymentStatus.name() == 'PENDING'}"
                                                         th:onclick="'confirmPayment(' + ${booking.id} + ')'">
                                                     <i class="fas fa-check"></i> Confirm Payment
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-success" 
-                                                        th:if="${booking.status.name() == 'PENDING'}"
+                                                        th:if="${booking.status != null && booking.status.name() == 'PENDING'}"
                                                         th:onclick="'confirmBooking(' + ${booking.id} + ')'">
                                                     <i class="fas fa-check"></i> Confirm
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger" 
-                                                        th:if="${booking.status.name() != 'CANCELLED'}"
+                                                        th:if="${booking.status != null && booking.status.name() != 'CANCELLED'}"
                                                         th:onclick="'cancelBooking(' + ${booking.id} + ')'">
                                                     <i class="fas fa-times"></i> Cancel
                                                 </button>

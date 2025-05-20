@@ -15,10 +15,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.security.web.csrf.CsrfToken;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @Controller
 @RequestMapping("/admin")
@@ -36,9 +39,20 @@ public class AdminReservationController {
 
     @GetMapping("/reservations")
     public String listReservations(Model model) {
-        List<Booking> bookings = bookingService.getAllBookings();
-        model.addAttribute("bookings", bookings);
-        return "admin/reservations";
+        try {
+            System.out.println("Attempting to fetch all bookings...");
+            List<Booking> bookings = bookingService.getAllBookings();
+            System.out.println("Successfully fetched " + bookings.size() + " bookings");
+            model.addAttribute("bookings", bookings);
+            model.addAttribute("error", null);
+            return "admin/reservations";
+        } catch (Exception e) {
+            System.err.println("Error in listReservations: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("error", "Failed to load reservations: " + e.getMessage());
+            model.addAttribute("bookings", new ArrayList<>());
+            return "admin/reservations";
+        }
     }
 
     @GetMapping("/reservations/new")
@@ -110,8 +124,12 @@ public class AdminReservationController {
 
     @PostMapping("/reservations/{id}/confirm")
     @ResponseBody
-    public ResponseEntity<String> confirmBooking(@PathVariable Long id) {
+    public ResponseEntity<String> confirmBooking(@PathVariable Long id, HttpServletRequest request) {
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            System.out.println("[DEBUG] User: " + (authentication != null ? authentication.getName() : "null"));
+            CsrfToken csrf = (CsrfToken) request.getAttribute("_csrf");
+            System.out.println("[DEBUG] CSRF Token: " + (csrf != null ? csrf.getToken() : "null"));
             Booking booking = bookingService.getBookingById(id)
                     .orElseThrow(() -> new RuntimeException("Booking not found"));
 
